@@ -1,0 +1,13 @@
+{
+    "require": {
+        "elasticsearch/elasticsearch": "^8.8"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.3"
+        },
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
