@@ -28,6 +28,11 @@
     <div class="col-md-9 p-0">
         <div class="card border-0 p-0">
             <div class="card-body p-0 m-0">
+                <div class="row d-flex ml-5 justify-content-start">
+                    <a class="btn btn-primary" style="border-radius: 30px;" href="bulkCreate">Toplu İlan Ekle</a>
+                    <a class="btn btn-primary ml-2" style="border-radius: 30px;" href="bulkUpdate">Toplu İlan Güncelle</a>
+                    <a class="btn btn-primary ml-2" style="border-radius: 30px;" href="bulkDelete">Toplu İlan Sil</a>
+                </div>
                 <div class="row justify-content-center">
                     <?php foreach ($adverts as $advert) : ?>
                         <div class="card col-2 m-2 d-flex align-items-stretch" style="width: 18rem;">

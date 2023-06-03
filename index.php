@@ -2,6 +2,7 @@
 require_once 'vendor/autoload.php';
 require_once 'services/Elasticsearch.php';
 require_once 'services/ElasticsearchHelpers.php';
+require_once 'services/DBHelpers.php';
 
 $routes = [
 	'/' => 'AdvertController@index',
@@ -15,6 +16,9 @@ $routes = [
 	"/search" => 'AdvertController@search',
 	"/categories" => 'CategoryController@categories',
 	"/subcategories" => 'CategoryController@subcategories',
+	"/bulkCreate" => 'BulkController@bulkCreate',
+	"/bulkDelete" => 'BulkController@bulkDelete',
+	"/bulkUpdate" => 'BulkController@bulkUpdate',
 ];
 
 $requestUrl = isset($_GET['url']) ? '/' . trim($_GET['url'], '/') : '/';
