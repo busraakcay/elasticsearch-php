@@ -360,6 +360,63 @@ function getAdvertsWithMultipleMatch($fields)
     return $client->search($params);
 }
 
+// reindexIndex --> CREATES NEW INDEX AND DELETE OLD INDEX
+function reindexIndex(string $oldIndex, string $newIndex, array $mappings = [], array $settings = [])
+{
+    /**
+     * USAGE: reindex
+     * 
+     * $mappings = [
+     *   'field1' => [
+     *       'type' => 'text'
+     *   ],
+     *   'field2' => [
+     *       'type' => 'keyword'
+     *   ]
+     * ];
+     * $settings = [
+     *   'number_of_shards' => 2,
+     *   'number_of_replicas' => 2
+     * ];
+     * reindexIndex("oldIndex", "newIndex", $mappings, $settings);
+     *
+     */
+
+    $client = Elasticsearch::getClient();
+    $params = [
+        'index' => $newIndex,
+        'body' => [
+            'settings' => $settings,
+            'mappings' => [
+                'properties' => $mappings
+            ]
+        ]
+    ];
+
+    $client->indices()->create($params);
+
+    // Reindex the data from the old index to the new index
+    $params = [
+        'body' => [
+            'source' => [
+                'index' => $oldIndex
+            ],
+            'dest' => [
+                'index' => $newIndex
+            ]
+        ]
+    ];
+
+    $client->reindex($params);
+
+    // Delete the old index
+    $params = [
+        'index' => $oldIndex
+    ];
+
+    $client->indices()->delete($params);
+}
+
 
 function console($obj)
 {
