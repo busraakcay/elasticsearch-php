@@ -10,7 +10,7 @@
             <label for="price">Fiyatı</label>
             <input type="text" name="price" value="<?php echo $advertDetail["price"] ?>" class="form-control" id="price">
         </div>
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-2">
             <label for="advertType">İlan Tipi</label>
             <select id="advertType" name="advertType" value="<?php echo $advertDetail["type"] ?>" class="form-control">
                 <option <?php echo $advertDetail["type"] === "Satılık" ? "selected" : "" ?>>Satılık</option>
@@ -18,11 +18,18 @@
                 <option <?php echo $advertDetail["type"] === "Aranıyor" ? "selected" : "" ?>>Aranıyor</option>
             </select>
         </div>
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-2">
             <label for="advertStatus">İlan Durumu</label>
             <select id="advertStatus" name="advertStatus" class="form-control">
                 <option <?php echo $advertDetail["status"] === "2. El" || $advertDetail["status"] === "İkinci El"  ? "selected" : "" ?>>İkinci El</option>
                 <option <?php echo $advertDetail["status"] === "Sıfır" ? "selected" : "" ?>>Sıfır</option>
+            </select>
+        </div>
+        <div class="form-group col-md-2">
+            <label for="isDopingAdvert">Doping İlan</label>
+            <select id="isDopingAdvert" name="isDopingAdvert" class="form-control">
+                <option <?php echo $advertDetail["isDopingAdvert"] === "Evet" ? "selected" : "" ?>>Evet</option>
+                <option <?php echo $advertDetail["isDopingAdvert"] === "Hayır" ? "selected" : "" ?>>Hayır</option>
             </select>
         </div>
     </div>

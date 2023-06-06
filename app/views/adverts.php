@@ -42,6 +42,15 @@
                             <div class="card-body row text-center justify-content-center align-items-center">
                                 <?php echo '<a href="show' . '?params=' . $advert["_source"]['id'] . '">'; ?>
                                 <p class="card-title font-weight-bold"> <?php echo $advert["_source"]["name"] ?> </p>
+                                <?php
+                                if (isset($advert["_source"]["is_doping"])) {
+                                    if ($advert["_source"]["is_doping"] == "Evet") {
+                                        echo "<small>Doping ilan</small>";
+                                    } else {
+                                        echo "<small>Normal ilan</small>";
+                                    }
+                                }
+                                ?>
                             </div></a>
                             <div class="card-footer bg-white text-center">
                                 <p class="card-text text-secondary"><?php echo $advert["_source"]["type"] ?> - <?php echo $advert["_source"]["status"] ?></p>
