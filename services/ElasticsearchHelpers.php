@@ -181,7 +181,8 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
                 // "category_parent_name",
             ],
             "type" => "best_fields", // "Fuzziness not allowed for type [phrase]"
-            "fuzziness" => "AUTO",
+            // "boost" => 2.0,
+            "fuzziness" => 1,
         ]],
     ];
     if (count($filterOptions) > 0) {
@@ -201,7 +202,7 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
             } else {
                 array_push(
                     $makeMustQueries,
-                    ["match_phrase" => [array_search($filteredMustQuery, $filteredMustQueries) => str_replace("_", "", $filteredMustQuery)]]
+                    ["match_phrase" => [array_search($filteredMustQuery, $filteredMustQueries) => $filteredMustQuery]]
                 );
             }
         }
@@ -294,7 +295,11 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
                             "is_doping" => "Evet"
                         ]],
                     ],
-                    "boost" => 1.0, // Optional boost value
+                    "should" => [
+                        ["match_phrase" => ["company_name" => $keyword]],
+                        ["match_phrase" => ["category_name" => $keyword]],
+                        ["match_phrase" => ["category_parent_name" => $keyword]],
+                    ]
                 ],
             ],
         ],
