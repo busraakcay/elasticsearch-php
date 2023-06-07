@@ -30,19 +30,39 @@ class AdvertController
         $parentCategory = $request["parentCategory"];
         $subCategory = $request["subCategory"];
         $sortingOption = $request["sort"];
+
+        $kywCity = checkCityExistence($keyword);
+
+        $kywStatus = checkAdvertStatus($keyword);
+        $kywType = checkAdvertType($keyword);
+
+        if ($request["status"]) {
+            if ($request["status"]  === "İkinci El") {
+                $requestStatus = "İkinci El 2. El";
+            } else {
+                $requestStatus = $request["status"];
+            }
+        } else {
+            $requestStatus = $kywStatus;
+        }
+
         $filterOptions = [
             "category_name" => $subCategory,
             "category_parent_name" => $subCategory,
-            "type" => $request["type"],
-            "status" => $request["status"]  === "İkinci El" ? "İkinci El 2. El" : $request["status"],
+            "type" => $request["type"] ? $request["type"] : $kywType,
+            "status" => $requestStatus,
             "country" => $request["country"],
-            "city" => $request["city"],
+            "city" => $request["city"] ? $request["city"] : $kywCity,
             "district" => $request["district"],
         ];
         $advertModel = new AdvertModel();
-        $advertModelResponse = $advertModel->searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize);
-        $adverts = $advertModelResponse["searchResults"]['hits']['hits'];
-        $advertCount = $advertModelResponse["searchResults"]['hits']['total']['value'];
+        $advertModelResponse = $advertModel->searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
+
+        $dopingAdverts = $advertModelResponse["searchResultsForDopings"];
+        $storeAdverts = $advertModelResponse["searchResultsForStores"];
+        $adverts = $advertModelResponse["searchResults"];
+
+        $advertCount = $advertModelResponse["searchCounts"];
 
         $totalPages = ceil($advertCount / $pageSize);
         $startPage = max($page - floor($numLinks / 2), 1);
@@ -62,6 +82,16 @@ class AdvertController
         }
         $query = $advertModelResponse["query"];
         require_once 'app/views/searchAdverts.php';
+    }
+
+    public function searchAdditionAdverts($request)
+    {
+
+        $companyId = $request["params"];
+        $query = unserialize($request["query"]);
+        $defaultAdvertId = $request["advertId"];
+        $adverts = getCompanyAdvertsBySearchQuery($companyId, $defaultAdvertId, $query);
+        require_once 'app/views/searchAdditionAdverts.php';
     }
 
     public function show($request)

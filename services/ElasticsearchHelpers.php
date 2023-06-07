@@ -140,7 +140,33 @@ function updateAdvert($request)
     }
 }
 
-function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $pageSize)
+function getCompanyAdvertsBySearchQuery($companyId, $defaultAdvertId, $query)
+{
+    $client = Elasticsearch::getClient();
+    array_push(
+        $query["bool"]["must"],
+        ["match_phrase" => ["company_id" => $companyId]]
+    );
+    $params = [
+        "index" => "makinecim",
+        "body" => [
+            'size' => 1000, // sayfalama yapılabilir
+            "query" => [
+                "bool" => [
+                    "must" => $query,
+                    "must_not" => [
+                        ["match" => [
+                            "id" => $defaultAdvertId
+                        ]],
+                    ]
+                ],
+            ],
+        ],
+    ];
+    return $client->search($params)["hits"]["hits"];
+}
+
+function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $pageSize, $page)
 {
     $client = Elasticsearch::getClient();
     $makeMustQueries = [
@@ -150,12 +176,12 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
                 "name^2",
                 "keywords",
                 "description",
-                "company_name",
-                "category_name",
-                "category_parent_name",
+                // "company_name",
+                // "category_name",
+                // "category_parent_name",
             ],
-            // "type" => "phrase", // "Fuzziness not allowed for type [phrase]"
-            'fuzziness' => 'AUTO',
+            "type" => "best_fields", // "Fuzziness not allowed for type [phrase]"
+            "fuzziness" => "AUTO",
         ]],
     ];
     if (count($filterOptions) > 0) {
@@ -195,6 +221,66 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
             );
         }
     }
+
+    $paramsForDopings = [
+        "index" => "makinecim",
+        "body" => [
+            'size' => 100,
+            "query" => [
+                "bool" => [
+                    "must" => $makeMustQueries,
+                    "filter" => [
+                        "match" => [
+                            "is_doping" => "Evet"
+                        ]
+                    ]
+                ],
+            ],
+            "sort" => [
+                "_script" => [
+                    "type" => "number",
+                    "script" => [
+                        "source" => "Math.random()",
+                    ],
+                    "order" => "asc",
+                ],
+            ],
+        ],
+    ];
+
+
+    $makeMustQueriesForStores = $makeMustQueries;
+    array_push(
+        $makeMustQueriesForStores,
+        ["match_phrase" => ["company_type" => "Sanal Mağaza"]]
+    );
+    $paramsForStores = [
+        'index' => 'makinecim',
+        'body' => [
+            'size' => 0,
+            'query' => [
+                'bool' => [
+                    'must' => $makeMustQueries
+                ]
+            ],
+            'aggs' => [
+                'unique_companies' => [
+                    'terms' => [
+                        'field' => 'company_id',
+                        'size' => 10000
+                    ],
+                    'aggs' => [
+                        'top_hits' => [
+                            'top_hits' => [
+                                'size' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ];
+
     $params = [
         "index" => "makinecim",
         "body" => [
@@ -203,6 +289,12 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
             "query" => [
                 "bool" => [
                     "must" => $makeMustQueries,
+                    "must_not" => [
+                        ["match" => [
+                            "is_doping" => "Evet"
+                        ]],
+                    ],
+                    "boost" => 1.0, // Optional boost value
                 ],
             ],
         ],
@@ -230,10 +322,28 @@ function getAdvertsBySearch($keyword,  $filterOptions, $sortingOption, $from, $p
     $source = "doc['status.keyword'].value.replace('2. El', 'İkinci El')";
     $statuses = getAggsBucketsWithScript("statuses", $source, $query);
 
-    console($params);
+    $responseParams = $client->search($params);
+
+    $dopingAdvertData = [];
+
+    if ($page == 1) {
+        $responseParamsForDopings = $client->search($paramsForDopings);
+        $responseParamsForStores = $client->search($paramsForStores);
+        $dopingAdvertData = $responseParamsForDopings['hits']['hits'];
+        $dopingAdvertDataCount = $responseParamsForDopings['hits']['total']['value'];
+        $storeBuckets = $responseParamsForStores["aggregations"]["unique_companies"]["buckets"];
+    } else {
+        $dopingAdvertData = [];
+        $dopingAdvertDataCount = 0;
+        $storeBuckets = [];
+    }
+
     //queryler burada olduğu için burdan gönderebiliriz veya query'i atıp diğer tarafta kullanabiliriz.
     return  [
-        "searchResults" => $client->search($params),
+        "searchResultsForDopings" => $dopingAdvertData,
+        "searchResultsForStores" => $storeBuckets,
+        "searchResults" => $responseParams['hits']['hits'],
+        "searchCounts" => $dopingAdvertDataCount + $responseParams['hits']['total']['value'] + count($storeBuckets),
         "categories" => $categories,
         "cities" => $cities,
         "statuses" => $statuses,
@@ -420,6 +530,47 @@ function reindexIndex(string $oldIndex, string $newIndex, array $mappings = [], 
 }
 
 
+function checkCityExistence($sentence)
+{
+    $client = Elasticsearch::getClient();
+
+    $params = [
+        "index" => "makinecim",
+        "body" => [
+            "size" => 0,
+            "aggs" => [
+                "cities" => [
+                    "terms" => [
+                        "field" => "city",
+                    ]
+                ]
+            ]
+        ]
+    ];
+
+    $response = $client->search($params);
+
+    $aggregations = $response['aggregations'];
+    $cityBuckets = $aggregations['cities']['buckets'];
+
+    $matchedCities = [];
+
+    $words = explode(" ", $sentence);
+
+    foreach ($words as $word) {
+        foreach ($cityBuckets as $bucket) {
+            $cityName = $bucket['key'];
+            if (strcasecmp($cityName, $word) === 0) {
+                $matchedCities[] = $cityName;
+                break 2;
+            }
+        }
+    }
+
+    return $matchedCities ? $matchedCities[0] : null;
+}
+
+
 function console($obj)
 {
     $js = json_encode($obj);
@@ -436,4 +587,40 @@ function printArray($obj)
 function getSubCategories($query)
 {
     return getAggsBuckets("sub_categories", "category_name.keyword", $query);
+}
+
+
+function checkAdvertStatus($sentence)
+{
+    $keywords = [
+        "Sıfır" => "Sıfır",
+        "İkinci El" => "İkinci El 2. El",
+        "Ikinci El" => "İkinci El 2. El",
+        "2. el" => "İkinci El 2. El"
+    ];
+
+    foreach ($keywords as $keyword => $value) {
+        if (stripos($sentence, $keyword) !== false) {
+            return $value;
+        }
+    }
+
+    return null;
+}
+
+function checkAdvertType($sentence)
+{
+    $keywords = [
+        "Satılık" => "Satılık",
+        "Kiralık" => "Kiralık",
+        "Aranıyor" => "Aranıyor",
+    ];
+
+    foreach ($keywords as $keyword => $value) {
+        if (stripos($sentence, $keyword) !== false) {
+            return $value;
+        }
+    }
+
+    return null;
 }

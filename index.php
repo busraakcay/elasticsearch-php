@@ -12,6 +12,7 @@ $routes = [
 	'/edit' => 'AdvertController@edit',
 	'/update' => 'AdvertController@update',
 	"/show" => 'AdvertController@show',
+	"/searchAdditionAdverts" => 'AdvertController@searchAdditionAdverts',
 	"/delete" => 'AdvertController@delete',
 	"/search" => 'AdvertController@search',
 	"/categories" => 'CategoryController@categories',

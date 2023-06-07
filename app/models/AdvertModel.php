@@ -22,8 +22,8 @@ class AdvertModel
         }
     }
 
-    public function searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize)
+    public function searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page)
     {
-        return getAdvertsBySearch($keyword, $filterOptions, $sortingOption, $from, $pageSize);
+        return getAdvertsBySearch($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
     }
 }
