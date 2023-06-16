@@ -39,7 +39,7 @@ function deleteScroll($scrollId)
 }
 
 function getAdvertCount($params = [
-    "index" => "makinecim",
+    "index" => "makinecim2",
 ])
 {
     $client = Elasticsearch::getClient();
