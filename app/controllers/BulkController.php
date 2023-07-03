@@ -13,7 +13,7 @@ class BulkController
 
     public function bulkCreate()
     {
-        // for ($i = 0; $i < 252000; $i += 1000) {
+        // for ($i = 0; $i <= 252000; $i += 1000) {
         //     $products = getDataByLimit("product", $i, 1000);
         //     $productsArray = array();
         //     foreach ($products as $product) {
@@ -41,13 +41,13 @@ class BulkController
         //         $productArray["image"] = $product["product_image1"];
         //         $productArray["company_id"] = $product["product_adder_id"];
         //         $productArray["company_name"] = $companyData["firm_name_tr"];
-        //         $productArray["company_logo"] = $product["product_adder_id"] . '.jpg';
         //         $productArray["company_type"] = $companyData["subdomain"];
         //         $productArray["created_at"] = date('Y-m-d\TH:i:s.000\Z', $product["product_add_time"]);
         //         $productArray["updated_at"] = date('Y-m-d\TH:i:s.000\Z', $product["product_update_time"]);
         //         $productArray["activation_ends"] = $product["activation_ends"] == null ? "2000-01-01" : $product["activation_ends"];
         //         $productArray["active"] = $product["product_active"];
         //         $productArray["is_deleted"] = $product["silindi"];
+        //         $productArray["warehouse"] = $product["warehouse_content_tr"];
         //         array_push($productsArray, $productArray);
         //     }
         //     $response  = $this->indexer->bulkCreateProducts($productsArray);

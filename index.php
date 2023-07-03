@@ -1,9 +1,10 @@
 <?php
 require_once 'vendor/autoload.php';
 require_once 'services/Elasticsearch.php';
+require_once 'services/ElasticsearchHelperFunctions.php';
 require_once 'services/ElasticsearchHelpers.php';
 require_once 'services/DBHelpers.php';
-
+$elasticsearch = new ElasticsearchHelpers();
 $routes = [
 	'/' => 'AdvertController@index',
 	'/index' => 'AdvertController@index',
@@ -15,8 +16,8 @@ $routes = [
 	"/searchAdditionAdverts" => 'AdvertController@searchAdditionAdverts',
 	"/delete" => 'AdvertController@delete',
 	"/search" => 'AdvertController@search',
+	"/searchByWarehouse" => 'AdvertController@searchByWarehouse',
 	"/categories" => 'CategoryController@categories',
-	"/subcategories" => 'CategoryController@subcategories',
 	"/bulkCreate" => 'BulkController@bulkCreate',
 	"/bulkDelete" => 'BulkController@bulkDelete',
 	"/bulkUpdate" => 'BulkController@bulkUpdate',
@@ -50,7 +51,7 @@ if ($controller && $action) {
 		<div class="col-3">
 			<?php
 			if ($action === "index") : ?>
-				<span class="navbar-brand mb-0 h1">İlanlar (<?php echo getAdvertCount() ?>)</span>
+				<span class="navbar-brand mb-0 h1">İlanlar (<?php echo $elasticsearch->getAdvertCount(); ?>)</span>
 			<? endif; ?>
 			<?php
 			if ($action === "search") : ?>
@@ -73,7 +74,7 @@ if ($controller && $action) {
 				<span class="navbar-brand mb-0 h1">Kategoriler</span>
 			<? endif; ?>
 		</div>
-		<form action="search" method="POST" class="col-6">
+		<form action="searchByWarehouse" method="POST" class="col-6">
 			<div class="row justify-content-center align-items-center">
 				<input type="hidden" value="1" name="page">
 				<input class="form-control col-10" type="text" name="keyword" value="<?php echo $_POST["keyword"] ?>" placeholder="İlan ara...">
@@ -85,7 +86,7 @@ if ($controller && $action) {
 			if ($action !== "index") : ?>
 				<a class="mr-2" href="index">Tüm İlanlar</a>
 			<? endif; ?>
-			<a href="create">İlan Ekle</a>
+			<!-- <a href="create">İlan Ekle</a> -->
 		</div>
 	</nav>
 	<div class="body">

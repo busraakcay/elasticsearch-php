@@ -64,6 +64,14 @@
                 }
               }
             },
+            "parent_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
             "parent_id": {
               "type": "text"
             }
@@ -71,9 +79,6 @@
         },
         "company_id": {
           "type": "keyword"
-        },
-        "company_logo": {
-          "type": "text"
         },
         "company_name": {
           "type": "text",
@@ -100,6 +105,9 @@
         },
         "is_deleted": {
           "type": "integer"
+        },
+        "warehouse": {
+          "type": "text"
         }
       }
     }

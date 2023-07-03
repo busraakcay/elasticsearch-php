@@ -37,14 +37,30 @@ function checkTableIfExist($table, $columnName, $value)
         $stmt = $conn->query($query);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $conn = null;
-        if ($result["bitis"] > $currentDateTime) {
-            return 1;
-        } else {
-            return 0;
-        }
+        // if ($result["bitis"] > $currentDateTime) {
+        //     return 1;
+        // } else {
+        //     return 0;
+        // }
+        return 1;
     } else {
         $conn = null;
         return 0;
+    }
+}
+
+function getParentCategoryName($parentId)
+{
+    if ($parentId != 0) {
+        $db = new DBConnection();
+        $conn = $db->connect();
+        $query = "SELECT  category_name_tr as category_name FROM category WHERE category_id = $parentId";
+        $stmt = $conn->query($query);
+        $parentName = $stmt->fetch(PDO::FETCH_ASSOC);
+        $conn = null;
+        return $parentName["category_name"];
+    } else {
+        return "Parent Category";
     }
 }
 
@@ -59,6 +75,8 @@ function getCategoryHierarchy($categoryId)
     $conn = null;
     if (!$categoryInfo) {
         return [];
+    } else {
+        $categoryInfo["parent_name"] = getParentCategoryName($categoryInfo["parent_id"]);
     }
     $categoryHierarchy = [];
     $categoryHierarchy[] = $categoryInfo;

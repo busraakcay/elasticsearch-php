@@ -4,18 +4,21 @@ require_once 'app/models/AdvertModel.php';
 
 class AdvertController
 {
-    public function index($scrollIdParam = null)
+    private $advertModel;
+    private $elasticsearch;
+
+    public function __construct()
     {
-        $advertModel = new AdvertModel();
-        $advertsData = $advertModel->getAdverts($scrollIdParam);
+        $this->advertModel = new AdvertModel();
+        $this->elasticsearch = new ElasticsearchHelpers();
+    }
+
+    public function index()
+    {
+        $advertsData = $this->advertModel->getAdverts();
         $adverts = $advertsData['hits']['hits'];
-        $scrollId = $advertsData['_scroll_id'];
         $categoryName = "Kategoriler";
-        $categories =  getAggsBuckets("categories", "category_parent_name.keyword");
-        if (count($adverts) === 0) {
-            deleteScroll($scrollIdParam);
-            header("Location: index");
-        }
+        $categories =  $this->elasticsearch->getCategoryBuckets(0, "parent_id");
         require_once 'app/views/adverts.php';
     }
 
@@ -56,7 +59,8 @@ class AdvertController
             "district" => $request["district"],
         ];
         $advertModel = new AdvertModel();
-        $advertModelResponse = $advertModel->searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
+        //hata vermesin diye değiştirildi bu fonksiyon zaten silinecek
+        $advertModelResponse = $this->elasticsearch->getAdvertsBySearch($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
 
         $dopingAdverts = $advertModelResponse["searchResultsForDopings"];
         $storeAdverts = $advertModelResponse["searchResultsForStores"];
@@ -84,13 +88,145 @@ class AdvertController
         require_once 'app/views/searchAdverts.php';
     }
 
+    public function searchByWarehouse($request)
+    {
+        $page = isset($request['page']) ? max(1, intval($request['page'])) : 1;
+        $pageSize = 15;
+        $numLinks = 5;
+        $from = ($page - 1) * $pageSize;
+        $keyword = $request["keyword"];
+        $page = $request["page"];
+        $country = $request["country"];
+        $city = $request["city"];
+        $district = $request["district"];
+        $type = $request["type"];
+        $status = $request["status"];
+        $sortingOption = $request["sort"];
+        $parentCategory = $request["parentCategory"];
+        $subCategory = $request["subCategory"];
+
+        $filterOptions = [];
+        $sortBy = "updated_at";
+
+        if ($sortingOption === "ascByPrice") {
+            $sortBy = "ascByPrice";
+        }
+        if ($sortingOption === "descByPrice") {
+            $sortBy = "descByPrice";
+        }
+        if ($sortingOption === "sortByCreatedAt") {
+            $sortBy = "sortByCreatedAt";
+        }
+
+        if ($parentCategory !== null && $parentCategory !== "" && ($subCategory !== null || $subCategory !== "")) {
+            array_push($filterOptions, [
+                "nested" => [
+                    'path' => 'categories',
+                    'query' => [
+                        'bool' => [
+                            "should" => [
+                                [
+                                    'match' => [
+                                        'categories.category_name.keyword' => $parentCategory,
+                                    ],
+                                ],
+                                [
+                                    'match' => [
+                                        'categories.parent_name.keyword' => $parentCategory,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]
+            ]);
+        }
+        if ($subCategory !== null && $subCategory !== "" && $parentCategory !== null && $parentCategory !== "") {
+            array_push($filterOptions, [
+                "nested" => [
+                    'path' => 'categories',
+                    'query' => [
+                        'bool' => [
+                            "must" => [
+                                [
+                                    'match' => [
+                                        'categories.category_name.keyword' => $subCategory,
+                                    ],
+                                ],
+                                [
+                                    'match' => [
+                                        'categories.parent_name.keyword' => $parentCategory,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]
+            ]);
+        }
+
+        if ($sortingOption === "filterByIndividual") {
+            array_push($filterOptions, ["match" => ["company_type" => "0"]]);
+        }
+        if ($sortingOption === "filterByStore") {
+            array_push($filterOptions, ["match" => ["company_type" => "1"]]);
+        }
+        if ($country !== null && $country !== "") {
+            array_push($filterOptions, ["match" => ["country" => $country]]);
+        }
+        if ($city !== null && $city !== "") {
+            array_push($filterOptions, ["match" => ["city" => $city]]);
+        }
+        if ($district !== null && $district !== "") {
+            array_push($filterOptions, ["match" => ["district" => $district]]);
+        }
+        if ($type !== null && $type !== "") {
+            array_push($filterOptions, ["match" => ["type" => $type]]);
+        }
+        if ($status !== null && $status !== "") {
+            array_push($filterOptions, ["match" => ["status" => $status]]);
+        }
+
+        $advertData = $this->elasticsearch->getAdvertsBySearch(
+            $pageSize,
+            $from,
+            $keyword,
+            0, //fuzziess
+            $sortBy,
+            $filterOptions,
+        );
+        if ($advertData["count"] == 0) {
+            $advertData = $this->elasticsearch->getAdvertsBySearch(
+                $pageSize,
+                $from,
+                $keyword,
+                1, //fuzziess
+                "score",
+                $filterOptions,
+            );
+        }
+        $advertCount = $advertData["count"];
+        $adverts = $advertData["adverts"];
+        $totalPages = ceil($advertCount / $pageSize);
+        $startPage = max($page - floor($numLinks / 2), 1);
+        $endPage = min($startPage + $numLinks - 1, $totalPages);
+
+        $cities = $advertData["cities"];
+        $statuses =  $advertData["statuses"];
+        $categories =  $advertData["categories"];
+        $dopingAdverts =  $advertData["dopingAdverts"];
+        $storeAdverts =  $advertData["storeAdverts"];
+        $query =  $advertData["query"];
+
+        require_once 'app/views/searchAdverts.php';
+    }
+
     public function searchAdditionAdverts($request)
     {
-
         $companyId = $request["params"];
-        $query = unserialize($request["query"]);
+        $query = unserialize(urldecode($request["query"]));
         $defaultAdvertId = $request["advertId"];
-        $adverts = getCompanyAdvertsBySearchQuery($companyId, $defaultAdvertId, $query);
+        $adverts = $this->elasticsearch->getCompanyAdvertsBySearchQuery($companyId, $defaultAdvertId, $query);
         require_once 'app/views/searchAdditionAdverts.php';
     }
 
@@ -98,8 +234,8 @@ class AdvertController
     {
         $advertModel = new AdvertModel();
         $advertDetailData = $advertModel->getAdvertDetail($request["params"]);
-        $advertDetail = $advertDetailData['hits']['hits'][0]["_source"];
-        $docId = $advertDetailData["hits"]['hits'][0]["_id"];
+        $advertDetail = $advertDetailData["_source"];
+        $id = $advertDetailData["_id"];
         require_once 'app/views/advertDetail.php';
     }
 
@@ -118,9 +254,9 @@ class AdvertController
     public function edit($request)
     {
         $advertModel = new AdvertModel();
+        $id = $request["params"];
         $advertDetailData = $advertModel->getAdvertDetail($request["params"]);
-        $advertDetail = $advertDetailData['hits']['hits'][0]["_source"];
-        $docId = $advertDetailData["hits"]['hits'][0]["_id"];
+        $advertDetail = $advertDetailData["_source"];
         require_once 'app/views/setAdvert.php';
     }
 
@@ -133,7 +269,7 @@ class AdvertController
 
     public function delete($request)
     {
-        $result = deleteDocument($request["params"]);
+        $result = $this->elasticsearch->deleteAdvert($request["params"]);
         require_once 'app/views/result.php';
     }
 }

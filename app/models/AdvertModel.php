@@ -2,28 +2,30 @@
 
 class AdvertModel
 {
-    public function getAdverts($scrollId)
+    private $elasticsearch;
+
+    public function __construct()
     {
-        return getAdvertsByLimit(25, $scrollId);
+        $this->elasticsearch = new ElasticsearchHelpers();
+    }
+
+    public function getAdverts()
+    {
+        return $this->elasticsearch->getAdverts();
     }
 
     public function getAdvertDetail($id)
     {
-        return getAdvertById($id);
+        return $this->elasticsearch->getAdvertById($id);
     }
 
     public function setAdvert($request, $type)
     {
         if ($type === "store") {
-            return indexAdvert($request);
+            return $this->elasticsearch->indexAdvert($request);
         }
         if ($type === "update") {
-            return updateAdvert($request);
+            return $this->elasticsearch->updateAdvert($request);
         }
-    }
-
-    public function searchAdverts($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page)
-    {
-        return getAdvertsBySearch($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
     }
 }

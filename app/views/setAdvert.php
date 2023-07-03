@@ -1,6 +1,5 @@
-<form action="<?php echo $advertDetail["id"] !== null ? 'update' : 'store' ?>" method="POST">
-    <input type="hidden" name="advertId" value="<?php echo $advertDetail["id"] ?>">
-    <input type="hidden" name="docId" value="<?php echo $docId ?>">
+<form action="<?php echo $id !== null ? 'update' : 'store' ?>" method="POST">
+    <input type="hidden" name="advertId" value="<?php echo $id ?>">
     <div class="form-row">
         <div class="form-group col-md-3">
             <label for="advertName">İlan Adı</label>
@@ -40,20 +39,20 @@
         </div>
         <div class="form-group col-md-3">
             <label for="categoryName">Kategori Adı</label>
-            <input type="text" value="<?php echo $advertDetail["category_name"] ?>" name="categoryName" class="form-control" id="categoryName">
+            <input type="text" value="<?php echo $advertDetail["categories"][0]["category_name"] ?>" name="categoryName" class="form-control" id="categoryName">
         </div>
         <div class="form-group col-md-3">
             <label for="categoryParentId">Ana Kategori ID</label>
-            <input type="text" name="categoryParentId" value="<?php echo $advertDetail["category_parent_id"] ?>" class="form-control" id="categoryParentId">
+            <input type="text" name="categoryParentId" value="<?php echo $advertDetail["categories"][1]["category_id"] ?>" class="form-control" id="categoryParentId">
         </div>
         <div class="form-group col-md-3">
             <label for="categoryParentName">Ana Kategori Adı</label>
-            <input type="text" name="categoryParentName" value="<?php echo $advertDetail["category_parent_name"] ?>" class="form-control" id="categoryParentName">
+            <input type="text" name="categoryParentName" value="<?php echo $advertDetail["categories"][0]["parent_name"] ?>" class="form-control" id="categoryParentName">
         </div>
     </div>
     <div class="form-group">
         <label for="description">Açıklama</label><br>
-        <textarea rows="5" name="description" class="form-control" id="description"><?php echo $advertDetail["description"] ?></textarea>
+        <textarea rows="5" name="description" class="form-control" id="description"><?php echo $advertDetail["warehouse"] ?></textarea>
     </div>
     <div class="form-group">
         <label for="keywords">Anahtar Kelimeler</label><br>

@@ -10,11 +10,7 @@
                             if ($categoryName === "Kategoriler") {
                                 echo '<a class="text-decoration-none text-dark" href="categories' . '?params=' . $category["key"] . '">';
                             } else {
-                                $textColor = "text-secondary";
-                                if (isset($subCategoryName) && $category["key"] === $subCategoryName) {
-                                    $textColor = "text-danger";
-                                }
-                                echo '<a class="text-decoration-none ' . $textColor . '" href="subcategories' . '?params=' . $category["key"] . '&subOf=' . $categoryName . '">';
+                                echo '<a class="text-decoration-none text-dark" href="categories' . '?params=' . $category["key"] . '&parentName=' . $categoryBucketValue . '">';
                             }
                             ?>
                             <small><?php echo $category['key']; ?></small></a>
@@ -36,25 +32,40 @@
                 <div class="row justify-content-center">
                     <?php foreach ($adverts as $advert) : ?>
                         <div class="card col-2 m-2 d-flex align-items-stretch" style="width: 18rem;">
-                            <!-- <div class="card-body row text-center justify-content-center align-items-center">
-                <img src="<?php echo $advert["_source"]['images'][0]["url"]; ?>" alt="<?php echo $advert["_source"]['id']; ?>" class="card-img-top img-fluid m-1">
-            </div> -->
                             <div class="card-body row text-center justify-content-center align-items-center">
-                                <?php echo '<a href="show' . '?params=' . $advert["_source"]['id'] . '">'; ?>
+                                <?php echo '<a href="show' . '?params=' . $advert["_id"] . '">'; ?>
                                 <p class="card-title font-weight-bold"> <?php echo $advert["_source"]["name"] ?> </p>
                                 <?php
                                 if (isset($advert["_source"]["is_doping"])) {
-                                    if ($advert["_source"]["is_doping"] == "Evet") {
+                                    if ($advert["_source"]["is_doping"] == 1) {
                                         echo "<small>Doping ilan</small>";
                                     } else {
                                         echo "<small>Normal ilan</small>";
                                     }
                                 }
                                 ?>
-                            </div></a>
+                            </div>
+                            </a>
                             <div class="card-footer bg-white text-center">
-                                <p class="card-text text-secondary"><?php echo $advert["_source"]["type"] ?> - <?php echo $advert["_source"]["status"] ?></p>
-                                <p class="card-text font-weight-bold text-danger"><?php echo $advert["_source"]["beautifiedprice"] ?></p>
+                                <p class="card-text text-secondary"><?php
+
+                                                                    if ($advert["_source"]["type"] === "veriliyor") {
+                                                                        echo "Satılık";
+                                                                    }
+                                                                    if ($advert["_source"]["type"] === "kiralik") {
+                                                                        echo "Kiralık";
+                                                                    }
+                                                                    if ($advert["_source"]["type"] === "araniyor") {
+                                                                        echo "Aranıyor";
+                                                                    }
+                                                                    ?> - <?php
+                                                                            if ($advert["_source"]["status"] === "1") {
+                                                                                echo "Sıfır";
+                                                                            } else {
+                                                                                echo "İkinci El";
+                                                                            }
+                                                                            ?></p>
+                                <p class="card-text font-weight-bold text-danger"><?php echo $advert["_source"]["price"] . " " . $advert["_source"]["currency"] ?></p>
                             </div>
                         </div>
 

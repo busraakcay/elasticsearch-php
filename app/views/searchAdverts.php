@@ -1,4 +1,4 @@
-<div class="row">
+<div class="row justify-content-center">
     <div class="col-md-3">
         <div class="card">
             <div class="card mx-2 mt-2">
@@ -8,7 +8,7 @@
             </div>
             <div class="card-body">
                 <h5 class="card-title">Filtreleme Seçenekleri</h5>
-                <form action="search" method="POST" id="searchForm">
+                <form action="searchByWarehouse" method="POST" id="searchForm">
                     <input type="hidden" value="<?php echo $keyword ?>" name="keyword">
                     <input type="hidden" value="<?php echo $page ?>" id="page" name="page">
                     <div class="form-group">
@@ -23,31 +23,27 @@
                         <label for="type">İlan Tipi</label>
                         <select class="form-control" name="type" id="type">
                             <option value="" selected>Seçiniz</option>
-                            <option <?php echo $filterOptions["type"] === "Satılık" ? "selected" : "" ?>>Satılık</option>
-                            <option <?php echo $filterOptions["type"] === "Kiralık" ? "selected" : "" ?>>Kiralık</option>
-                            <option <?php echo $filterOptions["type"] === "Aranıyor" ? "selected" : "" ?>>Aranıyor</option>
+                            <option value="veriliyor" <?php echo $type === "veriliyor" ? "selected" : "" ?>>Satılık</option>
+                            <option value="kiralik" <?php echo $type === "kiralik" ? "selected" : "" ?>>Kiralık</option>
+                            <option value="araniyor" <?php echo $type === "araniyor" ? "selected" : "" ?>>Aranıyor</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="status">İlan Durumu</label>
                         <select class="form-control" name="status" id="status">
                             <option value="" selected>Seçiniz</option>
-                            <option <?php echo $filterOptions["status"] === "İkinci El 2. El" ? "selected" : "" ?>>İkinci El</option>
-                            <option <?php echo $filterOptions["status"] === "Sıfır" ? "selected" : "" ?>>Sıfır</option>
+                            <option value="1" <?php echo $status === "1" ? "selected" : "" ?>>Sıfır</option>
+                            <option value="2" <?php echo $status === "2" ? "selected" : "" ?>>İkinci El</option>
                         </select>
                     </div>
-                    <!-- <div class="form-group">
-                        <label for="country">Ülke</label>
-                        <input type="text" class="form-control" value="<?php echo $filterOptions["country"] ?>" name="country" id="country">
-                    </div> -->
                     <div class="row justify-content-between align-items-center">
                         <div class="col-6 form-group">
                             <label for="city">Şehir</label>
-                            <input type="text" class="form-control" value="<?php echo $filterOptions["city"] ?>" name="city" id="city">
+                            <input type="text" class="form-control" value="<?php echo $city ?>" name="city" id="city">
                         </div>
                         <div class="col-6 form-group">
                             <label for="district">İlçe</label>
-                            <input type="text" class="form-control" value="<?php echo $filterOptions["district"] ?>" name="district" id="district">
+                            <input type="text" class="form-control" value="<?php echo $district ?>" name="district" id="district">
                         </div>
                     </div>
 
@@ -55,12 +51,12 @@
                         <label for="sort">Sıralama</label>
                         <select class="form-control" name="sort" id="sort">
                             <option value="" selected>Seçiniz</option>
-                            <option <?php echo $sortingOption === "Fiyata Göre Artan" ? "selected" : "" ?>>Fiyata Göre Artan</option>
-                            <option <?php echo $sortingOption === "Fiyata Göre Azalan" ? "selected" : "" ?>>Fiyata Göre Azalan</option>
-                            <option <?php echo $sortingOption === "Yeni İlanlar" ? "selected" : "" ?>>Yeni İlanlar</option>
-                            <option <?php echo $sortingOption === "Güncel İlanlar" ? "selected" : "" ?>>Güncel İlanlar</option>
-                            <option <?php echo $sortingOption === "Bireysel İlanlar" ? "selected" : "" ?>>Bireysel İlanlar</option>
-                            <option <?php echo $sortingOption === "Sanal Mağaza İlanları" ? "selected" : "" ?>>Sanal Mağaza İlanları</option>
+                            <option value="ascByPrice" <?php echo $sortingOption === "ascByPrice" ? "selected" : "" ?>>Fiyata Göre Artan</option>
+                            <option value="descByPrice" <?php echo $sortingOption === "descByPrice" ? "selected" : "" ?>>Fiyata Göre Azalan</option>
+                            <option value="sortByCreatedAt" <?php echo $sortingOption === "sortByCreatedAt" ? "selected" : "" ?>>Yeni İlanlar</option>
+                            <option value="sortByUpdatedAt" <?php echo $sortingOption === "sortByUpdatedAt" ? "selected" : "" ?>>Güncel İlanlar</option>
+                            <option value="filterByIndividual" <?php echo $sortingOption === "filterByIndividual" ? "selected" : "" ?>>Bireysel İlanlar</option>
+                            <option value="filterByStore" <?php echo $sortingOption === "filterByStore" ? "selected" : "" ?>>Sanal Mağaza İlanları</option>
                         </select>
                     </div>
                     <button type="submit" onclick="applyFilter()" class="btn btn-primary">Filtreyi Uygula</button>
@@ -74,14 +70,14 @@
                 <ul class="list-group">
                     <?php foreach ($categories as $category) : ?>
                         <li class="list-group-item d-block justify-content-between align-items-center">
-                            <a href="#" class="text-decoration-none <?php echo $category['key'] === $filterOptions["category_parent_name"]  ?  "text-danger" : "text-secondary" ?>" onclick="parentCategorySelected('<?php echo $category['key'] ?>')">
+                            <a href="#" class="text-decoration-none <?php echo $category['key'] === $category_parent_name  ?  "text-danger" : "text-secondary" ?>" onclick="parentCategorySelected('<?php echo $category['key'] ?>')">
                                 <small><?php echo $category['key']; ?></small></a>
                             <span class="badge badge-primary badge-pill ml-1"><?php echo $category['doc_count']; ?></span>
                             <hr>
                             <ul>
-                                <?php foreach (getSubCategories($query) as $subCategory) : ?>
+                                <?php foreach ($this->elasticsearch->getCategoryBuckets($category['key'], "parent_name.keyword") as $subCategory) : ?>
                                     <li class="justify-content-between align-items-center">
-                                        <a href="#" class="text-decoration-none <?php echo $subCategory['key'] === $filterOptions["category_name"] ?  "text-danger" : "text-secondary" ?>" onclick="subCategorySelected('<?php echo $subCategory['key'] ?>','<?php echo $category['key'] ?>')">
+                                        <a href="#" class="text-decoration-none <?php echo $subCategory['key'] === $category_name ?  "text-danger" : "text-secondary" ?>" onclick="subCategorySelected('<?php echo $subCategory['key'] ?>','<?php echo $category['key'] ?>')">
                                             <small><?php echo $subCategory['key']; ?></small></a>
                                         <span class="badge badge-primary badge-pill ml-1"><?php echo $subCategory['doc_count']; ?></span>
                                     </li>
@@ -99,7 +95,7 @@
                 <ul class="list-group">
                     <?php foreach ($cities as $city) : ?>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="#" class="text-decoration-none <?php echo $city['key'] === $filterOptions["city"] ?  "text-danger" : "text-secondary" ?>" onclick="citySelected('<?php echo $city['key'] ?>')">
+                            <a href="#" class="text-decoration-none <?php echo $city['key'] === $city ?  "text-danger" : "text-secondary" ?>" onclick="citySelected('<?php echo $city['key'] ?>')">
                                 <small><?php echo $city['key']; ?></small></a>
                             <span class="badge badge-primary badge-pill ml-1"><?php echo $city['doc_count']; ?></span>
                         </li>
@@ -111,137 +107,142 @@
             <div class="card-body">
                 <h5 class="card-title">Tür</h5>
                 <ul class="list-group">
+
                     <?php foreach ($statuses as $status) : ?>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="#" class="text-decoration-none <?php echo $status['key'] === $el ?  "text-danger" : "text-secondary" ?>" onclick="statusSelected('<?php echo $status['key'] ?>')">
-                                <small><?php echo $status['key']; ?></small></a>
-                            <span class="badge badge-primary badge-pill ml-1"><?php echo $status['doc_count']; ?></span>
-                        </li>
+                        <?php if ($status['key'] !== "") : ?>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="#" class="text-decoration-none <?php echo $status['key'] === $el ?  "text-danger" : "text-secondary" ?>" onclick="statusSelected('<?php echo $status['key'] ?>')">
+                                    <small><?php echo $status['key'] === "1" ? "Sıfır" : "İkinci El"; ?></small></a>
+                                <span class="badge badge-primary badge-pill ml-1"><?php echo $status['doc_count']; ?></span>
+                            </li>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </ul>
             </div>
         </div>
     </div>
-    <div class="col-md-9 p-0">
+    <div class="col-md-8 p-0">
         <div class="card border-0 p-0">
             <div class="card-body p-0 m-0">
                 <div class="row justify-content-center">
-                    <?php foreach ($dopingAdverts as $advert) : ?>
-                        <div class="card bg-success col-11 row mx-0 mb-2">
-                            <div class="card-body row text-center justify-content-between align-items-center">
-                                <div>
-                                    <?php echo '<a href="show' . '?params=' . $advert["_source"]['id'] . '">'; ?>
-                                    <div class="row text-light justify-content-between align-items-center">
-                                        <small class="d-block font-weight-bold"> <?php echo $advert["_source"]["name"] ?> </small>
-                                        <div class="ml-2">(
-                                            <?php
-                                            if (isset($advert["_source"]["is_doping"])) {
-                                                if ($advert["_source"]["is_doping"] == "Evet") {
-                                                    echo "<small>Doping ilan</small>";
+                    <?php if (intval($page) === 1) : ?>
+                        <?php foreach ($dopingAdverts as $advert) : ?>
+                            <div class="card bg-success col-11 row mx-0 mb-2">
+                                <div class="card-body row text-center justify-content-between align-items-center">
+                                    <div>
+                                        <?php echo '<a href="show' . '?params=' . $advert["_source"]['id'] . '">'; ?>
+                                        <div class="row text-light justify-content-between align-items-center">
+                                            <small class="d-block font-weight-bold"> <?php echo $advert["_source"]["name"] . " | " . $advert["_source"]["updated_at"] . " | " . $advert["_score"] ?> </small>
+                                            <div class="ml-2">(
+                                                <?php
+                                                if (isset($advert["_source"]["is_doping"])) {
+                                                    if ($advert["_source"]["is_doping"] == 1) {
+                                                        echo "<small>Doping ilan</small>";
+                                                    } else {
+                                                        echo "<small>Normal ilan</small>";
+                                                    }
                                                 } else {
-                                                    echo "<small>Normal ilan</small>";
+                                                    echo "<small>Bilgi yok</small>";
                                                 }
-                                            } else {
-                                                echo "<small>Bilgi yok</small>";
-                                            }
-                                            ?>
-                                            )
+                                                ?>
+                                                )
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <small class="d-block card-text text-light"><?php echo $advert["_source"]["company_name"] ?></small>
-                                </div>
-
-                            </div> </a>
-                            <div class="card-footer row bg-white justify-content-between align-items-center">
-                                <div>
-                                    <small class="d-block card-text text-warning"><?php echo $advert["_source"]["type"] ?></small>
-                                    <small class="d-block card-text text-success"><?php echo $advert["_source"]["status"] ?></small>
-                                </div>
-                                <div>
-                                    <small class="d-block card-text text-black"><?php echo $advert["_source"]["category_name"] ?></small>
-                                    <small class="d-block card-text text-primary"><?php echo $advert["_source"]["category_parent_name"] ?></small>
-                                </div>
-                                <div>
-                                    <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["country"] ?></small>
-                                    <small class="d-block card-text text-info"><?php echo $advert["_source"]["city"] ?></small>
-                                    <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["district"] ?></small>
-                                </div>
-
-
-                                <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["_source"]["beautifiedprice"] ?></small>
-                            </div>
-                        </div>
-
-                    <?php endforeach; ?>
-
-                    <?php foreach ($storeAdverts as $advert) : ?>
-                        <div class="card bg-warning col-11 row mx-0 mb-2">
-                            <div class="card-body row text-center justify-content-between align-items-center">
-                                <div>
-                                    <?php echo '<a href="show' . '?params=' . $advert["top_hits"]["hits"]["hits"][0]["_source"]['id'] . '">'; ?>
-                                    <div class="row text-light justify-content-between align-items-center">
-                                        <small class="d-block font-weight-bold"> <?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["name"] ?> </small>
-                                        <div class="mx-2">(
-                                            <?php
-                                            if (isset($advert["top_hits"]["hits"]["hits"][0]["_source"]["is_doping"])) {
-                                                if ($advert["top_hits"]["hits"]["hits"][0]["_source"]["is_doping"] == "Evet") {
-                                                    echo "<small>Doping ilan</small>";
-                                                } else {
-                                                    echo "<small>Normal ilan</small>";
-                                                }
-                                            } else {
-                                                echo "<small>Bilgi yok</small>";
-                                            }
-                                            ?>
-                                            )
-                                        </div>
+                                    <div>
+                                        <small class="d-block card-text text-light"><?php echo $advert["_source"]["company_name"] ?></small>
                                     </div>
                                 </div>
-                                <div>
-                                    <small class="d-block text-light card-text"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["company_name"] ?></small>
+                                </a>
+                                <div class="card-footer row bg-white justify-content-between align-items-center">
+                                    <div>
+                                        <small class="d-block card-text text-warning"><?php echo $advert["_source"]["type"] == "veriliyor" ? "Satılık" : "Kiralık" ?></small>
+                                        <small class="d-block card-text text-success"><?php echo $advert["_source"]["status"] == 1 ? "Sıfır" : "İkinci El" ?></small>
+                                    </div>
+                                    <div>
+                                        <small class="d-block card-text text-black"><?php echo $advert["_source"]["categories"][0]["category_name"] ?></small>
+                                        <small class="d-block card-text text-primary"><?php echo $advert["_source"]["categories"][0]["parent_name"] ?></small>
+                                    </div>
+                                    <div>
+                                        <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["country"] ?></small>
+                                        <small class="d-block card-text text-info"><?php echo $advert["_source"]["city"] ?></small>
+                                        <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["district"] ?></small>
+                                    </div>
+                                    <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["_source"]["price"] . " " . $advert["_source"]["currency"] ?> </small>
                                 </div>
-                            </div> </a>
-                            <div class="card-footer row bg-white justify-content-between align-items-center">
-                                <div>
-                                    <small class="d-block card-text text-warning"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["type"] ?></small>
-                                    <small class="d-block card-text text-success"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["status"] ?></small>
-                                </div>
-                                <div>
-                                    <small class="d-block card-text text-black"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["category_name"] ?></small>
-                                    <small class="d-block card-text text-primary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["category_parent_name"] ?></small>
-                                </div>
-                                <div>
-                                    <small class="d-block card-text text-secondary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["country"] ?></small>
-                                    <small class="d-block card-text text-info"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["city"] ?></small>
-                                    <small class="d-block card-text text-secondary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["district"] ?></small>
-                                </div>
-
-                                <div>
-                                    <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["beautifiedprice"] ?></small>
-                                    <?php
-                                    if (intval($advert["doc_count"]) > 1)
-                                        echo '<a href="searchAdditionAdverts' . '?params=' . $advert["top_hits"]["hits"]["hits"][0]["_source"]['company_id'] . '&query=' . urlencode(serialize($query)) . '&advertId=' . $advert["top_hits"]["hits"]["hits"][0]["_source"]['id'] .  '"><small class="font-weight-bold d-block m-1 card-text text-warning">+' . (intval($advert["doc_count"]) - 1)  . ' ilan</small></a>';
-                                    ?>
-                                </div>
-
+                                <small class="d-block card-text text-white"><?php echo $advert["_source"]["warehouse"] ?></small>
                             </div>
-                        </div>
+                        <?php endforeach; ?>
 
-                    <?php endforeach; ?>
+                        <?php foreach ($storeAdverts as $advert) : ?>
+                            <div class="card bg-warning col-11 row mx-0 mb-2">
+                                <div class="card-body row text-center justify-content-between align-items-center">
+                                    <div>
+                                        <?php echo '<a href="show' . '?params=' . $advert["top_hits"]["hits"]["hits"][0]["_source"]['id'] . '">'; ?>
+                                        <div class="row text-light justify-content-between align-items-center">
+                                            <small class="d-block font-weight-bold"> <?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["name"] . " | " . $advert["top_hits"]["hits"]["hits"][0]["_source"]["updated_at"] ?> </small>
+                                            <div class="mx-2">(
+                                                <?php
+                                                if (isset($advert["top_hits"]["hits"]["hits"][0]["_source"]["is_doping"])) {
 
+
+                                                    if ($advert["top_hits"]["hits"]["hits"][0]["_source"]["is_doping"] == 1) {
+                                                        echo "<small>Doping ilan</small>";
+                                                    } else {
+                                                        echo "<small>Normal ilan</small>";
+                                                    }
+                                                } else {
+                                                    echo "<small>Bilgi yok</small>";
+                                                }
+                                                ?>
+                                                )
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <small class="d-block text-light card-text"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["company_name"] ?></small>
+                                    </div>
+                                </div>
+                                </a>
+                                <div class="card-footer row bg-white justify-content-between align-items-center">
+                                    <div>
+                                        <small class="d-block card-text text-warning"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["type"] == "veriliyor" ? "Satılık" : "Kiralık" ?></small>
+                                        <small class="d-block card-text text-success"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["status"] == 1 ? "Sıfır" : "İkinci El" ?></small>
+                                    </div>
+                                    <div>
+                                        <small class="d-block card-text text-black"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["categories"][0]["category_name"] ?></small>
+                                        <small class="d-block card-text text-primary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["categories"][0]["parent_name"] ?></small>
+                                    </div>
+                                    <div>
+                                        <small class="d-block card-text text-secondary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["country"] ?></small>
+                                        <small class="d-block card-text text-info"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["city"] ?></small>
+                                        <small class="d-block card-text text-secondary"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["district"] ?></small>
+                                    </div>
+                                    <div class="text-right">
+                                        <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["price"] . " " . $advert["top_hits"]["hits"]["hits"][0]["_source"]["currency"] ?></small>
+                                        <?php
+                                        if (intval($advert["doc_count"]) > 1)
+                                            echo '<a href="searchAdditionAdverts' . '?params=' . $advert["top_hits"]["hits"]["hits"][0]["_source"]['company_id'] . '&query=' . urlencode(serialize($query)) . '&advertId=' . $advert["top_hits"]["hits"]["hits"][0]["_id"] .  '"><small class="font-weight-bold d-block m-1 card-text text-warning">+' . (intval($advert["doc_count"]) - 1)  . ' ilan</small></a>';
+                                        ?>
+                                    </div>
+                                </div>
+                                <small class="d-block card-text text-white"> <?php echo $advert["top_hits"]["hits"]["hits"][0]["_source"]["keywords"] ?> </small>
+                            </div>
+
+                        <?php endforeach; ?>
+
+                    <?php endif; ?>
                     <?php foreach ($adverts as $advert) : ?>
                         <div class="card bg-primary col-11 row mx-0 mb-2">
                             <div class="card-body row text-center justify-content-between align-items-center">
                                 <div>
-                                    <?php echo '<a href="show' . '?params=' . $advert["_source"]['id'] . '">'; ?>
+                                    <?php echo '<a href="show' . '?params=' . $advert["_id"] . '">'; ?>
                                     <div class="row text-light justify-content-between align-items-center">
-                                        <small class="d-block font-weight-bold"> <?php echo $advert["_source"]["name"] ?> </small>
+                                        <small class="d-block font-weight-bold"> <?php echo $advert["_source"]["name"] . " | " . $advert["_source"]["updated_at"] . " | " . $advert["_score"] ?> </small>
                                         <div class="ml-2">(
                                             <?php
                                             if (isset($advert["_source"]["is_doping"])) {
-                                                if ($advert["_source"]["is_doping"] == "Evet") {
+                                                if ($advert["_source"]["is_doping"] == 1) {
                                                     echo "<small>Doping ilan</small>";
                                                 } else {
                                                     echo "<small>Normal ilan</small>";
@@ -258,26 +259,28 @@
                                     <small class="d-block card-text text-light"><?php echo $advert["_source"]["company_name"] ?></small>
                                 </div>
 
-                            </div> </a>
+                            </div>
+                            </a>
                             <div class="card-footer row bg-white justify-content-between align-items-center">
                                 <div>
-                                    <small class="d-block card-text text-warning"><?php echo $advert["_source"]["type"] ?></small>
-                                    <small class="d-block card-text text-success"><?php echo $advert["_source"]["status"] ?></small>
+                                    <small class="d-block card-text text-warning"><?php echo $advert["_source"]["type"] == "veriliyor" ? "Satılık" : "Kiralık" ?></small>
+                                    <small class="d-block card-text text-success"><?php echo $advert["_source"]["status"] == 1 ? "Sıfır" : "İkinci El" ?></small>
                                 </div>
                                 <div>
-                                    <small class="d-block card-text text-black"><?php echo $advert["_source"]["category_name"] ?></small>
-                                    <small class="d-block card-text text-primary"><?php echo $advert["_source"]["category_parent_name"] ?></small>
+                                    <small class="d-block card-text text-black"><?php echo $advert["_source"]["categories"][0]["category_name"] ?></small>
+                                    <small class="d-block card-text text-primary"><?php echo $advert["_source"]["categories"][0]["parent_name"] ?></small>
                                 </div>
                                 <div>
                                     <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["country"] ?></small>
                                     <small class="d-block card-text text-info"><?php echo $advert["_source"]["city"] ?></small>
                                     <small class="d-block card-text text-secondary"><?php echo $advert["_source"]["district"] ?></small>
                                 </div>
-                                <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["_source"]["beautifiedprice"] ?></small>
+                                <small class="d-block card-text font-weight-bold text-danger"><?php echo $advert["_source"]["price"] . " " . $advert["_source"]["currency"] ?> </small>
                             </div>
+                            <small class="d-block card-text text-white"><?php echo $advert["_source"]["warehouse"] ?></small>
                         </div>
-
                     <?php endforeach; ?>
+
                 </div>
             </div>
             <div class="text-center">
@@ -339,9 +342,6 @@
 
     function statusSelected(status) {
         document.getElementById("page").value = 1
-        if (status === "2. El") {
-            status = "İkinci El";
-        }
         document.getElementById("status").value = status
         document.getElementById("searchForm").submit();
     }
