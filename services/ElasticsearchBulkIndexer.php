@@ -11,7 +11,7 @@ class ElasticsearchBulkIndexer
         $this->client = Elasticsearch::getClient();
     }
 
-    public function bulkCreateProducts($products)
+    public function bulkCreateProducts($products, $langCode)
     {
         $bulkRequest = [];
         foreach ($products as $product) {
@@ -19,7 +19,7 @@ class ElasticsearchBulkIndexer
             unset($product['id']);
             $createAction = [
                 'create' => [
-                    '_index' => 'makinecim2',
+                    '_index' => 'makinecim_' . $langCode,
                     '_id' => $productId,
                 ]
             ];
@@ -28,11 +28,11 @@ class ElasticsearchBulkIndexer
         }
         $bulkRequest[] = ''; // Add an empty string element for the trailing newline
         $bulkRequestBody = implode("\n", $bulkRequest);
-    
+
         $response = $this->client->bulk(['body' => $bulkRequestBody]);
         return $response;
     }
-    
+
 
     public function bulkUpdateProducts($products)
     {
@@ -42,7 +42,7 @@ class ElasticsearchBulkIndexer
             unset($product['id']);
             $updateAction = [
                 'update' => [
-                    '_index' => 'makinecim2',
+                    '_index' => getIndexName(),
                     '_id' => $productId,
                 ]
             ];
@@ -62,7 +62,7 @@ class ElasticsearchBulkIndexer
             $productId = $product['id'];
             $deleteAction = [
                 'delete' => [
-                    '_index' => 'makinecim2',
+                    '_index' => getIndexName(),
                     '_id' => $productId,
                 ]
             ];

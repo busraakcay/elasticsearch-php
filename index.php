@@ -1,9 +1,15 @@
 <?php
 require_once 'vendor/autoload.php';
 require_once 'services/Elasticsearch.php';
-require_once 'services/ElasticsearchHelperFunctions.php';
+require_once 'services/Helpers.php';
 require_once 'services/ElasticsearchHelpers.php';
 require_once 'services/DBHelpers.php';
+session_start();
+
+if (!isset($_SESSION['lang'])) {
+	$_SESSION['lang'] = "tr";
+}
+
 $elasticsearch = new ElasticsearchHelpers();
 $routes = [
 	'/' => 'AdvertController@index',
@@ -21,6 +27,7 @@ $routes = [
 	"/bulkCreate" => 'BulkController@bulkCreate',
 	"/bulkDelete" => 'BulkController@bulkDelete',
 	"/bulkUpdate" => 'BulkController@bulkUpdate',
+	"/changeLang" => 'AdvertController@changeLang',
 ];
 
 $requestUrl = isset($_GET['url']) ? '/' . trim($_GET['url'], '/') : '/';
@@ -74,14 +81,31 @@ if ($controller && $action) {
 				<span class="navbar-brand mb-0 h1">Kategoriler</span>
 			<? endif; ?>
 		</div>
-		<form action="searchByWarehouse" method="POST" class="col-6">
+		<form action="searchByWarehouse" method="POST" class="col-5">
 			<div class="row justify-content-center align-items-center">
 				<input type="hidden" value="1" name="page">
 				<input class="form-control col-10" type="text" name="keyword" value="<?php echo $_POST["keyword"] ?>" placeholder="İlan ara...">
 				<button type="submit" class="btn btn-primary ml-1">Ara</button>
 			</div>
 		</form>
-		<div class="col-3 text-right">
+		<!-- Example single danger button -->
+
+		<div class="col-4 text-right">
+			<div class="btn-group mr-2">
+				<button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Dil (<?php echo strtoupper($_SESSION['lang']) ?>)
+				</button>
+				<div class="dropdown-menu">
+					<a class="dropdown-item" href="changeLang?params=tr">TR</a>
+					<a class="dropdown-item" href="changeLang?params=en">EN</a>
+					<!-- <a class="dropdown-item" href="changeLang?params=ar">AR</a>
+					<a class="dropdown-item" href="changeLang?params=de">DE</a>
+					<a class="dropdown-item" href="changeLang?params=es">ES</a>
+					<a class="dropdown-item" href="changeLang?params=fr">FR</a>
+					<a class="dropdown-item" href="changeLang?params=pt">PT</a>
+					<a class="dropdown-item" href="changeLang?params=ru">RU</a> -->
+				</div>
+			</div>
 			<?php
 			if ($action !== "index") : ?>
 				<a class="mr-2" href="index">Tüm İlanlar</a>

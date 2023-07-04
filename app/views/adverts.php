@@ -25,9 +25,18 @@
         <div class="card border-0 p-0">
             <div class="card-body p-0 m-0">
                 <div class="row d-flex ml-5 justify-content-start">
-                    <a class="btn btn-primary" style="border-radius: 30px;" href="bulkCreate">Toplu İlan Ekle</a>
-                    <a class="btn btn-primary ml-2" style="border-radius: 30px;" href="bulkUpdate">Toplu İlan Güncelle</a>
-                    <a class="btn btn-primary ml-2" style="border-radius: 30px;" href="bulkDelete">Toplu İlan Sil</a>
+                    <?php
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "tr" . '">Toplu İlan Ekle (TR)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "en" . '">Toplu İlan Ekle (EN)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "ar" . '">Toplu İlan Ekle (AR)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "de" . '">Toplu İlan Ekle (DE)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "es" . '">Toplu İlan Ekle (ES)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "fr" . '">Toplu İlan Ekle (FR)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "pt" . '">Toplu İlan Ekle (PT)</a>';
+                    echo '<a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkCreate' . '?params=' . "ru" . '">Toplu İlan Ekle (RU)</a>';
+                    ?>
+                    <a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkUpdate">Toplu İlan Güncelle</a>
+                    <a class="btn btn-primary mb-2 mr-1" style="border-radius: 30px;" href="bulkDelete">Toplu İlan Sil</a>
                 </div>
                 <div class="row justify-content-center">
                     <?php foreach ($adverts as $advert) : ?>

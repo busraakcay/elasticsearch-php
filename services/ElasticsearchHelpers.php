@@ -9,7 +9,7 @@ class ElasticsearchHelpers
     {
         $this->client = Elasticsearch::getClient();
         $this->params = [
-            "index" => "makinecim2",
+            "index" => getIndexName(),
             'body' => [
                 "query" => [
                     "bool" => [
@@ -455,5 +455,134 @@ class ElasticsearchHelpers
             'index' => $oldIndex
         ];
         $this->client->indices()->delete($params);
+    }
+
+
+    public function createIndexIfNotExists($indexName)
+    {
+        $indexExists = $this->client->indices()->exists(['index' => $indexName])->asBool(); // çalışmıyor.
+        // echo $indexExists;
+        // die(); 
+        $indexParams = [
+            'index' => $indexName,
+            'body' => [
+                'settings' => [
+                    'number_of_shards' => '2',
+                    'number_of_replicas' => '2'
+                ],
+                'mappings' => [
+                    'properties' => [
+                        'name' => [
+                            'type' => 'text'
+                        ],
+                        'keywords' => [
+                            'type' => 'text'
+                        ],
+                        'code' => [
+                            'type' => 'text'
+                        ],
+                        'price' => [
+                            'type' => 'double'
+                        ],
+                        'currency' => [
+                            'type' => 'keyword'
+                        ],
+                        'hide_price' => [
+                            'type' => 'integer'
+                        ],
+                        'type' => [
+                            'type' => 'keyword'
+                        ],
+                        'status' => [
+                            'type' => 'keyword'
+                        ],
+                        'brand' => [
+                            'type' => 'text'
+                        ],
+                        'model' => [
+                            'type' => 'text'
+                        ],
+                        'is_doping' => [
+                            'type' => 'integer'
+                        ],
+                        'is_showcase' => [
+                            'type' => 'integer'
+                        ],
+                        'country' => [
+                            'type' => 'keyword'
+                        ],
+                        'city' => [
+                            'type' => 'keyword'
+                        ],
+                        'district' => [
+                            'type' => 'keyword'
+                        ],
+                        'image' => [
+                            'type' => 'text'
+                        ],
+                        'categories' => [
+                            'type' => 'nested',
+                            'properties' => [
+                                'category_id' => [
+                                    'type' => 'text'
+                                ],
+                                'category_name' => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'keyword' => [
+                                            'type' => 'keyword'
+                                        ]
+                                    ]
+                                ],
+                                'parent_name' => [
+                                    'type' => 'text',
+                                    'fields' => [
+                                        'keyword' => [
+                                            'type' => 'keyword'
+                                        ]
+                                    ]
+                                ],
+                                'parent_id' => [
+                                    'type' => 'text'
+                                ]
+                            ]
+                        ],
+                        'company_id' => [
+                            'type' => 'keyword'
+                        ],
+                        'company_name' => [
+                            'type' => 'text',
+                            'fields' => [
+                                'keyword' => [
+                                    'type' => 'keyword'
+                                ]
+                            ]
+                        ],
+                        'company_type' => [
+                            'type' => 'keyword'
+                        ],
+                        'created_at' => [
+                            'type' => 'date'
+                        ],
+                        'updated_at' => [
+                            'type' => 'date'
+                        ],
+                        'activation_ends' => [
+                            'type' => 'date'
+                        ],
+                        'active' => [
+                            'type' => 'integer'
+                        ],
+                        'is_deleted' => [
+                            'type' => 'integer'
+                        ],
+                        'warehouse' => [
+                            'type' => 'text'
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $this->client->indices()->create($indexParams);
     }
 }

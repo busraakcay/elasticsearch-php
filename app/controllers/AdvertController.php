@@ -21,73 +21,7 @@ class AdvertController
         $categories =  $this->elasticsearch->getCategoryBuckets(0, "parent_id");
         require_once 'app/views/adverts.php';
     }
-
-    public function search($request)
-    {
-        $page = isset($request['page']) ? max(1, intval($request['page'])) : 1;
-        $pageSize = 15;
-        $numLinks = 5;
-        $from = ($page - 1) * $pageSize;
-
-        $keyword = $request["keyword"];
-        $parentCategory = $request["parentCategory"];
-        $subCategory = $request["subCategory"];
-        $sortingOption = $request["sort"];
-
-        $kywCity = checkCityExistence($keyword);
-
-        $kywStatus = checkAdvertStatus($keyword);
-        $kywType = checkAdvertType($keyword);
-
-        if ($request["status"]) {
-            if ($request["status"]  === "İkinci El") {
-                $requestStatus = "İkinci El 2. El";
-            } else {
-                $requestStatus = $request["status"];
-            }
-        } else {
-            $requestStatus = $kywStatus;
-        }
-
-        $filterOptions = [
-            "category_name" => $subCategory,
-            "category_parent_name" => $subCategory,
-            "type" => $request["type"] ? $request["type"] : $kywType,
-            "status" => $requestStatus,
-            "country" => $request["country"],
-            "city" => $request["city"] ? $request["city"] : $kywCity,
-            "district" => $request["district"],
-        ];
-        $advertModel = new AdvertModel();
-        //hata vermesin diye değiştirildi bu fonksiyon zaten silinecek
-        $advertModelResponse = $this->elasticsearch->getAdvertsBySearch($keyword, $filterOptions, $sortingOption, $from, $pageSize, $page);
-
-        $dopingAdverts = $advertModelResponse["searchResultsForDopings"];
-        $storeAdverts = $advertModelResponse["searchResultsForStores"];
-        $adverts = $advertModelResponse["searchResults"];
-
-        $advertCount = $advertModelResponse["searchCounts"];
-
-        $totalPages = ceil($advertCount / $pageSize);
-        $startPage = max($page - floor($numLinks / 2), 1);
-        $endPage = min($startPage + $numLinks - 1, $totalPages);
-        $el = "";
-        if ($request["status"] == "İkinci El") {
-            $el = "İkinci El";
-        }
-        if ($request["status"] == "Sıfır") {
-            $el = "Sıfır";
-        }
-        $cities =  $advertModelResponse["cities"];
-        $statuses =  $advertModelResponse["statuses"];
-        $categories =  $advertModelResponse["categories"];
-        if ($advertCount === 0) {
-            $result = "Aradığınız ilan bulunamadı.";
-        }
-        $query = $advertModelResponse["query"];
-        require_once 'app/views/searchAdverts.php';
-    }
-
+    
     public function searchByWarehouse($request)
     {
         $page = isset($request['page']) ? max(1, intval($request['page'])) : 1;
@@ -271,5 +205,11 @@ class AdvertController
     {
         $result = $this->elasticsearch->deleteAdvert($request["params"]);
         require_once 'app/views/result.php';
+    }
+
+    public function changeLang($lang)
+    {
+        $_SESSION['lang'] = $lang['params'];
+        header('Location: index');
     }
 }
